@@ -9,4 +9,4 @@ WORKDIR /app
 
 RUN composer install --no-dev
 
-CMD echo "$OCI_PRIVATE_KEY_CONTENT" > /app/oracle.pem && php -S 0.0.0.0:$PORT
+CMD echo "$OCI_PRIVATE_KEY_CONTENT" | base64 -d > /app/oracle.pem && php -S 0.0.0.0:$PORT
