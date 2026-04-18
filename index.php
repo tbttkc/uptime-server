@@ -1,7 +1,6 @@
 <?php
 declare(strict_types=1);
 
-
 // useful when script is being executed by cron user
 $pathPrefix = ''; // e.g. /usr/share/nginx/oci-arm-host-capacity/
 
@@ -45,6 +44,30 @@ if ($bootVolumeSizeInGBs) {
     $config->setBootVolumeId($bootVolumeId);
 }
 
+// ==========================================
+// ĐOẠN CODE THÊM VÀO ĐỂ IN BIẾN MÔI TRƯỜNG
+// ==========================================
+echo "\n--- KỂM TRA BIẾN MÔI TRƯỜNG TỪ RAILWAY ---\n";
+echo "REGION: " . getenv('OCI_REGION') . "\n";
+echo "TENANCY_ID: " . getenv('OCI_TENANCY_ID') . "\n";
+echo "USER_ID: " . getenv('OCI_USER_ID') . "\n";
+echo "FINGERPRINT: " . getenv('OCI_KEY_FINGERPRINT') . "\n";
+echo "AVAILABILITY_DOMAIN: " . (getenv('OCI_AVAILABILITY_DOMAIN') ?: 'CHƯA SET') . "\n";
+echo "SUBNET_ID: " . getenv('OCI_SUBNET_ID') . "\n";
+echo "IMAGE_ID: " . getenv('OCI_IMAGE_ID') . "\n";
+echo "SHAPE: " . getenv('OCI_SHAPE') . "\n";
+echo "CPU/RAM: " . getenv('OCI_OCPUS') . " Core / " . getenv('OCI_MEMORY_IN_GBS') . " GB\n";
+
+$keyPath = getenv('OCI_PRIVATE_KEY_FILENAME');
+echo "ĐƯỜNG DẪN KEY: " . $keyPath . "\n";
+if (file_exists((string)$keyPath)) {
+    echo "TRẠNG THÁI FILE KEY: [OK] File đã tồn tại trên server!\n";
+} else {
+    echo "TRẠNG THÁI FILE KEY: [LỖI] Không tìm thấy file key. Cần kiểm tra lại Start Command!\n";
+}
+echo "------------------------------------------\n\n";
+// ==========================================
+
 $api = new OciApi();
 if (getenv('CACHE_AVAILABILITY_DOMAINS')) {
     $api->setCache(new FileCache($config));
@@ -53,14 +76,6 @@ if (getenv('TOO_MANY_REQUESTS_TIME_WAIT')) {
     $api->setWaiter(new TooManyRequestsWaiter((int) getenv('TOO_MANY_REQUESTS_TIME_WAIT')));
 }
 $notifier = (function (): \Hitrov\Interfaces\NotifierInterface {
-    /*
-     * if you have own https://core.telegram.org/bots
-     * and set TELEGRAM_BOT_API_KEY and your TELEGRAM_USER_ID in .env
-     *
-     * then you can get notified when script will succeed.
-     * otherwise - don't mind OR develop you own NotifierInterface
-     * to e.g. send SMS or email.
-     */
     return new \Hitrov\Notification\Telegram();
 })();
 
@@ -96,9 +111,6 @@ foreach ($availabilityDomains as $availabilityDomainEntity) {
     } catch(ApiCallException $e) {
         $message = $e->getMessage();
         echo "$message\n";
-//            if ($notifier->isSupported()) {
-//                $notifier->notify($message);
-//            }
 
         if (
             $e->getCode() === 500 &&
