@@ -59,11 +59,17 @@ echo "SHAPE: " . getenv('OCI_SHAPE') . "\n";
 echo "CPU/RAM: " . getenv('OCI_OCPUS') . " Core / " . getenv('OCI_MEMORY_IN_GBS') . " GB\n";
 
 $keyPath = getenv('OCI_PRIVATE_KEY_FILENAME');
-echo "ĐƯỜNG DẪN KEY: " . $keyPath . "\n";
 if (file_exists((string)$keyPath)) {
-    echo "TRẠNG THÁI FILE KEY: [OK] File đã tồn tại trên server!\n";
+    $keyContent = file_get_contents((string)$keyPath);
+    $pkey = openssl_pkey_get_private($keyContent);
+    if ($pkey !== false) {
+        echo "TRẠNG THÁI KEY: [OK] File key HOÀN HẢO, định dạng RSA chuẩn!\n";
+    } else {
+        echo "TRẠNG THÁI KEY: [LỖI NẶNG] File key đã bị hỏng định dạng (Corrupted)!\n";
+        echo "Nội dung bị lỗi bắt đầu bằng: " . substr(trim($keyContent), 0, 40) . "...\n";
+    }
 } else {
-    echo "TRẠNG THÁI FILE KEY: [LỖI] Không tìm thấy file key. Cần kiểm tra lại Start Command!\n";
+    echo "TRẠNG THÁI KEY: [LỖI] Không tìm thấy file key!\n";
 }
 echo "------------------------------------------\n\n";
 // ==========================================
